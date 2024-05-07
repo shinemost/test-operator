@@ -70,7 +70,7 @@ spec:
         - /manager
         args:
         - --leader-elect
-        image: docker.io/supertain147/test-operator:v0.0.4
+        image: docker.io/supertain147/test-operator:v0.0.5
         name: manager
         securityContext:
           allowPrivilegeEscalation: false

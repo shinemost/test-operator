@@ -98,13 +98,15 @@ func (r *MyProxyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	// 如果部署存在，比较目前部署的replicas与requre_replicas数量是否一致,如果不一致，调谐到requre_replicas
 	if *found.Spec.Replicas != Requre_Replicas {
-		logger.Info("目前部署实例数", found.Status.Replicas, "期望部署实例数", Requre_Replicas)
+		logger.Info("当前部署", "实例数", found.Status.Replicas, "期望部署实例数", Requre_Replicas)
 		var replicas int32 = Requre_Replicas
 		found.Spec.Replicas = &replicas
 		err = r.Update(ctx, found)
 		if err != nil {
 			logger.Error(err, "更新部署实例数报错")
+			return ctrl.Result{}, err
 		}
+		logger.Info("部署成功")
 		return ctrl.Result{Requeue: true}, err
 	}
 	return ctrl.Result{}, nil
