@@ -22,6 +22,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -32,7 +33,7 @@ import (
 )
 
 const (
-	Require_Namespace = "test_ns"
+	Require_Namespace = "test-ns"
 	Requre_Replicas   = 2
 )
 
@@ -84,7 +85,7 @@ func (r *MyProxyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		logger.Info("新建一个部署", "命名空间", dep.Namespace, "部署名称", dep.Name)
 		err = r.Create(ctx, dep)
 		if err != nil {
-			logger.Error(err, "新建部署报错，命名空间", dep.Namespace, "部署名称", dep.Name)
+			logger.Error(err, "新建部署报错", "命名空间", dep.Namespace, "部署名称", dep.Name)
 			return ctrl.Result{}, err
 		}
 		// 通知控制器重新入队，等待调谐
@@ -120,6 +121,9 @@ func (r *MyProxyReconciler) deploymentForExample(myproxy *gatewayv1alpha1.MyProx
 	}
 	dep.Spec = appsv1.DeploymentSpec{
 		Replicas: &replicas,
+		Selector: &metav1.LabelSelector{
+			MatchLabels: labels,
+		},
 		Template: corev1.PodTemplateSpec{
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{

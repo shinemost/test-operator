@@ -1,0 +1,12 @@
+apiVersion: gateway.shinemost.top/v1alpha1  
+kind: MyProxy  
+metadata:  
+  labels:  
+    app.kubernetes.io/name: myproxy  
+    app.kubernetes.io/instance: myproxy-sample  
+    app.kubernetes.io/part-of: tmpoperator  
+    app.kubernetes.io/managed-by: kustomize  
+    app.kubernetes.io/created-by: tmpoperator  
+  name: myproxy-sample  
+spec:  
+  name: toto
