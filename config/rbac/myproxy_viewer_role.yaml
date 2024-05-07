@@ -1,0 +1,27 @@
+# permissions for end users to view myproxies.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: myproxy-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: test-operator
+    app.kubernetes.io/part-of: test-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: myproxy-viewer-role
+rules:
+- apiGroups:
+  - gateway.shinemost.top
+  resources:
+  - myproxies
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - gateway.shinemost.top
+  resources:
+  - myproxies/status
+  verbs:
+  - get
