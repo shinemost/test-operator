@@ -45,6 +45,14 @@ spec:
             type: object
           status:
             description: MyProxyStatus defines the observed state of MyProxy
+            properties:
+              pod_names:
+                description: pod名称
+                items:
+                  type: string
+                type: array
+            required:
+            - pod_names
             type: object
         type: object
     served: true

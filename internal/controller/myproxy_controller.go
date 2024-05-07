@@ -18,6 +18,8 @@ package controller
 
 import (
 	"context"
+	"reflect"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -47,6 +49,7 @@ type MyProxyReconciler struct {
 //+kubebuilder:rbac:groups=gateway.shinemost.top,resources=myproxies/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=gateway.shinemost.top,resources=myproxies/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -107,9 +110,44 @@ func (r *MyProxyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return ctrl.Result{}, err
 		}
 		logger.Info("部署成功")
-		return ctrl.Result{Requeue: true}, err
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	// 处理podNames逻辑
+	podList := &corev1.PodList{}
+	listOpts := []client.ListOption{
+		client.InNamespace(Require_Namespace),
+		client.MatchingLabels(map[string]string{
+			"test_label": myProxy.Spec.Name,
+		}),
+	}
+
+	if err = r.List(ctx, podList, listOpts...); err != nil {
+		logger.Error(err, "查询pods失败", "pods所在命名空间", Require_Namespace)
+		return ctrl.Result{}, err
+	}
+	podNames := getPodNames(podList.Items)
+
+	if !reflect.DeepEqual(podNames, myProxy.Status.PodNames) {
+		myProxy.Status.PodNames = podNames
+		err := r.Status().Update(ctx, myProxy)
+		if err != nil {
+			logger.Error(err, "更新 MyProxy 状态失败")
+			return ctrl.Result{}, err
+		}
+		logger.Info("更新 MyProxy 状态成功", "pod的名称为", strings.Join(podNames, ","))
+		return ctrl.Result{Requeue: true}, nil
 	}
 	return ctrl.Result{}, nil
+}
+
+// 获取pod的名字，从其元数据中取，放入切片中
+func getPodNames(pods []corev1.Pod) []string {
+	podNames := make([]string, len(pods))
+	for i, pod := range pods {
+		podNames[i] = pod.Name
+	}
+	return podNames
 }
 
 // 创建deployment的私有方法，所属命名空间为test_ns

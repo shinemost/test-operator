@@ -34,8 +34,8 @@ type MyProxySpec struct {
 
 // MyProxyStatus defines the observed state of MyProxy
 type MyProxyStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// pod名称
+	PodNames []string `json:"pod_names"`
 }
 
 //+kubebuilder:object:root=true
