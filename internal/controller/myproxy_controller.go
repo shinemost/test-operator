@@ -117,9 +117,7 @@ func (r *MyProxyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	podList := &corev1.PodList{}
 	listOpts := []client.ListOption{
 		client.InNamespace(Require_Namespace),
-		client.MatchingLabels(map[string]string{
-			"test_label": myProxy.Spec.Name,
-		}),
+		client.MatchingLabels(labelsForMyProxy(myProxy.Spec.Name)),
 	}
 
 	if err = r.List(ctx, podList, listOpts...); err != nil {
@@ -130,15 +128,27 @@ func (r *MyProxyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	if !reflect.DeepEqual(podNames, myProxy.Status.PodNames) {
 		myProxy.Status.PodNames = podNames
+
+		// 检查Pod是否正常
+
+		condition := checkPodExistance(podNames)
+		myProxy.Status.Conditions = append(myProxy.Status.Conditions, condition)
+
 		err := r.Status().Update(ctx, myProxy)
 		if err != nil {
 			logger.Error(err, "更新 MyProxy 状态失败")
 			return ctrl.Result{}, err
 		}
-		logger.Info("更新 MyProxy 状态成功", "pod的名称为", strings.Join(podNames, ","))
-		return ctrl.Result{Requeue: true}, nil
+		logger.Info("更新 MyProxy 状态成功", "pod的名称为", strings.Join(podNames, ","), "pod是否存在信息", condition.Message)
 	}
+
 	return ctrl.Result{}, nil
+}
+
+// labelsForMyProxy returns the labels for selecting the resources
+// belonging to the given MyPorxy CR name.
+func labelsForMyProxy(name string) map[string]string {
+	return map[string]string{"test_label": name}
 }
 
 // 获取pod的名字，从其元数据中取，放入切片中
@@ -152,32 +162,62 @@ func getPodNames(pods []corev1.Pod) []string {
 
 // 创建deployment的私有方法，所属命名空间为test_ns
 func (r *MyProxyReconciler) deploymentForExample(myproxy *gatewayv1alpha1.MyProxy) *appsv1.Deployment {
-	dep := &appsv1.Deployment{}
-	dep.Namespace = Require_Namespace
-	dep.Name = myproxy.Spec.Name
+	labels := labelsForMyProxy(myproxy.Spec.Name)
 	var replicas int32 = Requre_Replicas
-	labels := map[string]string{
-		"test_label": myproxy.Spec.Name,
-	}
-	dep.Spec = appsv1.DeploymentSpec{
-		Replicas: &replicas,
-		Selector: &metav1.LabelSelector{
-			MatchLabels: labels,
+
+	dep := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      myproxy.Spec.Name,
+			Namespace: Require_Namespace,
+			Labels:    labels,
 		},
-		Template: corev1.PodTemplateSpec{
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:  "nginx",
-						Image: "nginx",
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "nginx",
+							Image: "nginx",
+							Ports: []corev1.ContainerPort{{
+								ContainerPort: 80,
+								Name:          "nginx",
+							}},
+						},
 					},
 				},
 			},
 		},
 	}
-	dep.Labels = labels
-	dep.Spec.Template.Labels = labels
+
+	// Set MyProxy instance as the owner and controller
+	ctrl.SetControllerReference(myproxy, dep, r.Scheme)
 	return dep
+}
+
+// 检查pod是否存在
+func checkPodExistance(podNames []string) metav1.Condition {
+	if len(podNames) == Requre_Replicas {
+		return metav1.Condition{
+			Status:  metav1.ConditionTrue,
+			Reason:  "发现Pods",
+			Message: "所有的Pod都已发现",
+			Type:    "Check existance of pods",
+		}
+	} else {
+		return metav1.Condition{
+			Status:  metav1.ConditionFalse,
+			Reason:  "没有发现Pods",
+			Message: "pod names 包含的pod数量不对",
+			Type:    "Check existance of pods",
+		}
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.

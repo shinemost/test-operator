@@ -36,6 +36,8 @@ type MyProxySpec struct {
 type MyProxyStatus struct {
 	// pod名称
 	PodNames []string `json:"pod_names"`
+	// pod条件
+	Conditions []metav1.Condition `json:"conditions"` 
 }
 
 //+kubebuilder:object:root=true
