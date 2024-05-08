@@ -197,7 +197,10 @@ func (r *MyProxyReconciler) deploymentForExample(myproxy *gatewayv1alpha1.MyProx
 	}
 
 	// Set MyProxy instance as the owner and controller
-	ctrl.SetControllerReference(myproxy, dep, r.Scheme)
+	err := ctrl.SetControllerReference(myproxy, dep, r.Scheme)
+	if err != nil {
+		return nil
+	}
 	return dep
 }
 
@@ -205,17 +208,19 @@ func (r *MyProxyReconciler) deploymentForExample(myproxy *gatewayv1alpha1.MyProx
 func checkPodExistance(podNames []string) metav1.Condition {
 	if len(podNames) == Requre_Replicas {
 		return metav1.Condition{
-			Status:  metav1.ConditionTrue,
-			Reason:  "发现Pods",
-			Message: "所有的Pod都已发现",
-			Type:    "Check existance of pods",
+			Status:             metav1.ConditionTrue,
+			Reason:             "PodsFound",
+			Message:            "所有的Pod都已发现",
+			Type:               "CheckExistanceOfPods",
+			LastTransitionTime: metav1.Now(),
 		}
 	} else {
 		return metav1.Condition{
-			Status:  metav1.ConditionFalse,
-			Reason:  "没有发现Pods",
-			Message: "pod names 包含的pod数量不对",
-			Type:    "Check existance of pods",
+			Status:             metav1.ConditionFalse,
+			Reason:             "PodsNotFound",
+			Message:            "pod names 包含的pod数量不对",
+			Type:               "CheckExistanceOfPods",
+			LastTransitionTime: metav1.Now(),
 		}
 	}
 }
