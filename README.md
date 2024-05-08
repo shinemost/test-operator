@@ -16,7 +16,7 @@
 **Build and push your image to the location specified by `IMG`:**
 
 ```sh
-make docker-build docker-push IMG=<some-registry>/test-operator:tag
+make docker-build docker-push IMG=supertain147/test-operator:tag
 ```
 
 **NOTE:** This image ought to be published in the personal registry you specified. 
@@ -64,6 +64,24 @@ make uninstall
 
 ```sh
 make undeploy
+```
+
+**部署MyProxy示例:**
+
+```sh
+kubectl apply -f proxy_test.yaml
+```
+
+**部署Nginx service示例:**
+
+```sh
+kubectl apply -f service.yaml
+```
+
+**针对kind,minikube集群，使用port-forward暴露pod端口:**
+
+```sh
+kubectl port-forward -n test-ns <pod-name> 8080:80
 ```
 
 ## Contributing
