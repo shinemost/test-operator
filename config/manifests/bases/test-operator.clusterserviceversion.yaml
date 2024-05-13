@@ -1,0 +1,51 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: test-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: MyProxy is the Schema for the myproxies API
+      displayName: My Proxy
+      kind: MyProxy
+      name: myproxies.gateway.shinemost.top
+      version: v1alpha1
+  description: shinemost learning k8s operator with Operator Framework
+  displayName: test-operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - test
+  - k8s
+  - operator
+  - operator-sdk
+  links:
+  - name: Test Operator
+    url: https://test-operator.domain
+  maintainers:
+  - email: hjfu2019@gmail.com
+    name: shinemost
+  maturity: alpha
+  provider:
+    name: shinemost
+    url: https://github.com/shinemost/test-operator
+  version: 0.0.0
